@@ -5,6 +5,7 @@ description: Connecting simulation-based inference to world models, and what tha
 tags: world-models drug-discovery SBI
 date: 2026-07-05
 featured: true
+published: false
 
 authors:
   - name: Vincent D. Zaballa

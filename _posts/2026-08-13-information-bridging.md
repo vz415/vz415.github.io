@@ -122,7 +122,7 @@ y_i\sim p(y_i\mid\theta_0,\xi_i) \\
 \theta_{1:L}\sim p(\theta_{1:L})
 }
 }
-\Bigl[
+\left[
 \log
 \frac{
 p_\phi(y_i\mid\theta_0,\xi_i)^{1+\lambda}
@@ -132,7 +132,7 @@ p_\phi(y_i\mid\theta_0,\xi_i)^{1+\lambda}
 \sum\nolimits_{\ell=0}^{L}
 p_\phi(y_i\mid\theta_\ell,\xi_i)
 }
-\Bigr].
+\right].
 $$
 
 The $\lambda$ term regularizes likelihood fitting: increasing $\lambda$ places more emphasis on likelihood accuracy relative to the information-gain objective, while $\lambda = 0$ recovers the unregularized InfoNCE objective. In practice, this tradeoff also affects optimization stability, which we investigate in the paper.
