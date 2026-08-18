@@ -41,17 +41,6 @@ ninja.data = [{
           window.location.href = "/blog/2026/information-bridging/";
         
       },
-    },{id: "post-biological-world-models-for-drug-discovery",
-      
-        title: "Biological World Models for Drug Discovery",
-      
-      description: "Connecting simulation-based inference to world models, and what that framing buys us for adaptive drug discovery.",
-      section: "Posts",
-      handler: () => {
-        
-          window.location.href = "/blog/2026/biological-world-models/";
-        
-      },
     },{id: "news-a-simple-inline-announcement",
           title: 'A simple inline announcement.',
           description: "",
