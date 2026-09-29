@@ -1,0 +1,20 @@
+# Invited talks and presentations, newest first.
+# Fields: date (display text), year, title, event, location, url (optional)
+
+- date: Dec. 2025
+  year: 2025
+  title: Diffusion transformers as novel foundation models for systems biology
+  event: Neural Information Processing Systems (NeurIPS) LatinX in AI Workshop
+  location: San Diego, CA
+
+- date: Apr. 2025
+  year: 2025
+  title: "Optimizing Likelihoods via Mutual Information: Bridging Simulation-Based Inference and Bayesian Optimal Experimental Design"
+  event: "Lightning Talk, Stanford Experimental Design: AI for Science 2025"
+  location: Palo Alto, CA
+
+- date: Apr. 2022
+  year: 2022
+  title: Optimal Design of Experiments for Simulation-Based Inference of Mechanistic Acyclic Biological Networks
+  event: Lightning Talk, UCLA SoCalSysBio 2022
+  location: Los Angeles, CA
