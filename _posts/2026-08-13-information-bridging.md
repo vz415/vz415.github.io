@@ -205,7 +205,7 @@ TODO:
 - define median distance carefully
 - explain InfoNCE EIG bias correctly
 - verify dependence on number of contrastive samples
-{% endcomment %}
+  {% endcomment %}
 
 There is an interesting tradeoff here: Bayesian optimization can sometimes report a larger estimated EIG, while the designs obtained by SBI-BOED produce better downstream inference. Part of this discrepancy likely comes from finite-sample behavior of the InfoNCE bound and its approximation to the marginal likelihood; we discuss this tradeoff in more detail in the paper.
 
