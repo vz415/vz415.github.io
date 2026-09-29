@@ -25,8 +25,8 @@ _styles: |
 <!-- _pages/publications.md -->
 
 <div class="pub-view-toggle">
-  <button type="button" class="active" data-view="year">By year</button>
-  <button type="button" data-view="topic">By topic</button>
+  <button type="button" class="active" data-view="topic">By topic</button>
+  <button type="button" data-view="year">By year</button>
 </div>
 
 <!-- Bibsearch Feature -->
@@ -35,21 +35,19 @@ _styles: |
 
 <div class="publications">
 
-<div class="pub-view" id="pub-view-year">
-{% bibliography %}
+<div class="pub-view" id="pub-view-topic">
+<h2 class="bibliography">Generative Models</h2>
+{% bibliography --group_by none --query @*[topic~=gen] %}
+<h2 class="bibliography">Stochastic Processes and Monte Carlo</h2>
+{% bibliography --group_by none --query @*[topic~=stoch] %}
+<h2 class="bibliography">Bayesian Inference and Experimental Design</h2>
+{% bibliography --group_by none --query @*[topic~=infer] %}
+<h2 class="bibliography">AI for Drug Discovery</h2>
+{% bibliography --group_by none --query @*[topic~=drug] %}
 </div>
 
-<div class="pub-view" id="pub-view-topic" hidden>
-<h2 class="bibliography">Bayesian experimental design</h2>
-{% bibliography --group_by none --query @*[topic=boed] %}
-<h2 class="bibliography">Simulation-based inference</h2>
-{% bibliography --group_by none --query @*[topic=sbi] %}
-<h2 class="bibliography">Drug design</h2>
-{% bibliography --group_by none --query @*[topic=drugdesign] %}
-<h2 class="bibliography">Language Models and Scientific Discovery</h2>
-{% bibliography --group_by none --query @*[topic=llmsci] %}
-<h2 class="bibliography">Medical devices</h2>
-{% bibliography --group_by none --query @*[topic=devices] %}
+<div class="pub-view" id="pub-view-year" hidden>
+{% bibliography %}
 </div>
 
 </div>
