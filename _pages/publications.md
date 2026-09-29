@@ -44,6 +44,8 @@ _styles: |
 {% bibliography --group_by none --query @*[topic~=infer] %}
 <h2 class="bibliography">AI for Drug Discovery</h2>
 {% bibliography --group_by none --query @*[topic~=drug] %}
+<h2 class="bibliography">Language Models and Scientific Discovery</h2>
+{% bibliography --group_by none --query @*[topic~=llmsci] %}
 </div>
 
 <div class="pub-view" id="pub-view-year" hidden>
