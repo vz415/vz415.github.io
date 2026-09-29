@@ -202,6 +202,8 @@ exclude:
   - _pages/profiles.md
   - _pages/projects.md
   - _pages/teaching.md
+  - draft-biological-world-models.html
+  - draft-biological-world-models.zip
   - purgecss.config.js
   - README.md
   - readme_preview/
