@@ -1,9 +1,18 @@
-"AJP":
-  url: https://aapt.scitation.org/journal/ajp
-  color: "#00369f"
+# Badge colors: workshops are muted; main venues use the site theme color.
+"MLSB @ NeurIPS":
+  color: "#6c757d"
 
-"PhysRev":
-  url: https://journals.aps.org/
+"ML4LMS @ ICML":
+  color: "#6c757d"
 
-"Vision":
-  color: "#009f36"
+"GenBio @ NeurIPS":
+  color: "#6c757d"
+
+"DAE @ ICML":
+  color: "#6c757d"
+
+"CompBio @ ICML":
+  color: "#6c757d"
+
+"LMRL @ NeurIPS":
+  color: "#6c757d"

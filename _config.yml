@@ -280,7 +280,7 @@ display_categories: [] # these categories will be displayed on the front page of
 
 scholar:
   last_name: [Zaballa]
-  first_name: [Vincent, D.]
+  first_name: [Vincent, Vincent D.]
 
   style: apa
   locale: en
@@ -334,6 +334,7 @@ filtered_bibtex_keywords:
     selected,
     slides,
     supp,
+    topic,
     video,
     website,
   ]
