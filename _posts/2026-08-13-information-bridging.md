@@ -37,9 +37,9 @@ That brings us to simulation-based inference.
 
 ## 1. Why SBI? From simulations to latent parameters
 
-Suppose we can simulate many possible realities using different latent parameter values $\theta$, which, in our BMP example, would contain the unknown "binding affinity" between proteins. If we have a faithful simulator of our process, we can generate simulated observations, $y$, compare them with reality, $y_o$, and favor the parameter values whose simulations resemble the observed data. So we can generate a dataset of parameter-simulation pairs $(\theta, y)$ and favor the $\theta$ that generates the $y$ closest to $y_o$. 
+Suppose we can simulate many possible realities using different latent parameter values $\theta$, which, in our BMP example, would contain the unknown "binding affinity" between proteins. If we have a faithful simulator of our process, we can generate simulated observations, $y$, compare them with reality, $y_o$, and favor the parameter values whose simulations resemble the observed data. So we can generate a dataset of parameter-simulation pairs $(\theta, y)$ and favor the $\theta$ that generates the $y$ closest to $y_o$.
 
-In its simplest form, this is Approximate Bayesian Computation (ABC): simulate from the model, compare simulated and observed data, and retain parameter values that produce sufficiently similar outcomes. As the name suggests, this takes a Bayesian perspective where the parameters we drew came from a prior $\theta \sim p(\theta)$, which we use to draw samples from our simulator $y \sim p(y \mid \theta)$ - akin to sampling a likelihood (but we can't actually evaluate the probabilities of the simulatoed samples) - and can condition on our observation to get samples from the posterior $p(\theta \mid y_o) \propto p(\theta) p(y_o \mid \theta)$. We don't have the "inference objects" of the posterior or likelihood, but ABC methods essentially perform this process to return posterior samples. Also, as you can imagine, if we have a better prior (more information) then ABC is more-likely to simulate a result that looks like our observations. 
+In its simplest form, this is Approximate Bayesian Computation (ABC): simulate from the model, compare simulated and observed data, and retain parameter values that produce sufficiently similar outcomes. As the name suggests, this takes a Bayesian perspective where the parameters we drew came from a prior $\theta \sim p(\theta)$, which we use to draw samples from our simulator $y \sim p(y \mid \theta)$ - akin to sampling a likelihood (but we can't actually evaluate the probabilities of the simulatoed samples) - and can condition on our observation to get samples from the posterior $p(\theta \mid y_o) \propto p(\theta) p(y_o \mid \theta)$. We don't have the "inference objects" of the posterior or likelihood, but ABC methods essentially perform this process to return posterior samples. Also, as you can imagine, if we have a better prior (more information) then ABC is more-likely to simulate a result that looks like our observations.
 
 On the other hand, modern simulation-based inference (SBI) methods can instead train neural networks to approximate an **inference object**: for example, the likelihood, posterior, or likelihood ratio. This can provide amortized inference, meaning that after training, the model can be reused for inference across many observations rather than repeating the full inference procedure from scratch.
 
@@ -184,7 +184,7 @@ The important part is not simply that randomness helps optimization. The width o
 
 The motivating advantage of SBI-BOED is that the simulator itself does **not** need to be differentiable with respect to the design.
 
-Some alternative approaches can propagate gradients through experimental designs when the simulator is differentiable, or when simulator outputs can be precomputed over a design grid. Those assumptions can be powerful, but they exclude many scientific simulators—including the BMP model that motivated this work. You can actually use reinforcement learning (RL) but that is *very* sample inefficient so have fun waiting for results before the heat death of the universe.
+Some alternative approaches can propagate gradients through experimental designs when the simulator is differentiable, or when simulator outputs can be precomputed over a design grid. Those assumptions can be powerful, but they exclude many scientific simulators—including the BMP model that motivated this work. You can actually use reinforcement learning (RL) but that is _very_ sample inefficient so have fun waiting for results before the heat death of the universe.
 
 The BMP simulator therefore provides the more interesting test in our paper.
 
@@ -199,6 +199,7 @@ We find that SBI-BOED can discover useful experimental designs with substantiall
 
 {% comment %}
 TODO:
+
 - BMP table results
 - precise simulator-efficiency numbers
 - define median distance carefully

@@ -29,17 +29,17 @@ $$
 p_\phi(y, \theta, \xi),
 $$
 
-which is parameterized by model weights $\phi$ and models the joint distribution of what phenotypic response $y$ you would see given that you perturbed with an action $\xi$ and assuming latent variables $\theta$ that describe the underlying biology. You pre-train on tuples of simulations $(y, \theta, \xi)$ that you think are true *a priori* — we'll get to where this assumption falls apart later. (Note: SBI models don't always encode an action variable $\xi$.)
+which is parameterized by model weights $\phi$ and models the joint distribution of what phenotypic response $y$ you would see given that you perturbed with an action $\xi$ and assuming latent variables $\theta$ that describe the underlying biology. You pre-train on tuples of simulations $(y, \theta, \xi)$ that you think are true _a priori_ — we'll get to where this assumption falls apart later. (Note: SBI models don't always encode an action variable $\xi$.)
 
 ## World models: a brief primer
 
-A world model, generally, is a predictive model that captures how an *environment* evolves over time and how that evolution depends on an agent's previous actions. Let $o_t$ be the observation at time $t$ given an action $a_t$; this results in a reward $r_t$ that depends on a utility function. A world model is a parameterized predictive system with model parameters $\psi$ that approximates the environment's dynamics
+A world model, generally, is a predictive model that captures how an _environment_ evolves over time and how that evolution depends on an agent's previous actions. Let $o_t$ be the observation at time $t$ given an action $a_t$; this results in a reward $r_t$ that depends on a utility function. A world model is a parameterized predictive system with model parameters $\psi$ that approximates the environment's dynamics
 
 $$
 p_\psi(s_{t+1}, o_{t+1}, r_t \mid s_t, a_t),
 $$
 
-where the true environment state $s_t$ may be fully or partially observed, or hidden.  In partially observed settings, the model needs to infer a latent belief-like state from an interaction history tuple $h_t = (o_{\leq t}, a_{\leq t})$, which can optionally be done with the help of an encoder $s_t \sim q_\eta (s_t \mid h_t)$.
+where the true environment state $s_t$ may be fully or partially observed, or hidden. In partially observed settings, the model needs to infer a latent belief-like state from an interaction history tuple $h_t = (o_{\leq t}, a_{\leq t})$, which can optionally be done with the help of an encoder $s_t \sim q_\eta (s_t \mid h_t)$.
 
 ## Relating SBI models to world models
 
@@ -104,7 +104,7 @@ This is close in spirit to a phenotypic screen, where assay quality is often jud
 
 ## Side information in drug discovery
 
-Once we define a utility, the next question is what information the model needs in order to make *better* decisions under that utility. This is where the world-model framing becomes particularly useful. We can ask which additional variables should be brought into the joint model, whether they actually improve decisions, and how uncertainty propagates through the downstream decision.
+Once we define a utility, the next question is what information the model needs in order to make _better_ decisions under that utility. This is where the world-model framing becomes particularly useful. We can ask which additional variables should be brought into the joint model, whether they actually improve decisions, and how uncertainty propagates through the downstream decision.
 
 In drug discovery, this question shows up in the debate between ligand-based and structure-based modeling. A ligand-only model may predict activity from chemical similarity, while a structure-aware model tries to use information about the target, its binding site, and protein-ligand interactions. Let $\zeta$ represent this external structural or biophysical information. In the BMP setting, this could include ligand-receptor binding information, which overlaps with my previous work on BMP ligand-receptor structure and with Huber et al.'s use of parameter-level Bayesian updates to guide biological hypothesis formation. Let $\beta$ represent a small-molecule perturbation, distinct from the BMP ligand perturbation $\xi$. We can then write a conditional model
 
@@ -122,11 +122,12 @@ The joint formulation provides an intuitive formualtion of what were the necessa
 
 <div id="model-viz" style="width:100%;height:220px;margin:1.8rem 0;border-radius:12px;overflow:hidden;background:#faf8ff;box-shadow:0 2px 16px rgba(120,100,180,0.08);"></div>
 
-The key word is *ideally*. Adding variables to a joint model is not the same thing as adding useful information. A structural variable $\zeta$ helps only if it is relevant to the outcome $y$, calibrated enough to trust, and connected to the decision we actually care about. Otherwise, it can make the model more confident for the wrong reason, which can be a bad thing if it fails to find new drugs, or, a good thing if it reflects the performance of some successful hedge fund managers--correct for the wrong reasons (but still correct).
+The key word is _ideally_. Adding variables to a joint model is not the same thing as adding useful information. A structural variable $\zeta$ helps only if it is relevant to the outcome $y$, calibrated enough to trust, and connected to the decision we actually care about. Otherwise, it can make the model more confident for the wrong reason, which can be a bad thing if it fails to find new drugs, or, a good thing if it reflects the performance of some successful hedge fund managers--correct for the wrong reasons (but still correct).
 
 The world-model framing adds one more twist. When side information fails, that failure is itself informative. If a binding affinity model predicts that a molecule should perturb the pathway, but the observed response $y$ does not move, the model can help separate different explanations. The affinity prediction may be wrong, the structural representation may be misleading, or the molecule may bind correctly while remaining irrelevant to the downstream phenotype. These are different failure modes, and they imply different next experiments. In this sense, the biological world model gives us a place to propagate uncertainty from structure prediction, affinity prediction, pathway simulation, and experimental measurement into the decision we actually care about.
 
 This leaves a few layers of uncertainty:
+
 - The world model itself must be accurate, which depends on $\phi$ and any causal assumptions used to represent it
 - Variables within the model must be accurate, such as the protein structure or its prediction
 - Predictions of interactions between variables must be accurate, such as the notoriously difficult problem of structure-based binding affinity prediction
@@ -147,11 +148,11 @@ A compounding effect comes from how the model relates one context to another. A 
 
 This is where the world model can help localize failure. Was the binding prediction wrong, or was the predicted binding real but irrelevant to the downstream phenotype? Those are different failure modes and they suggest different subsequent experiments. Over time, each result updates the world model's shared variables and assumptions, including which binding pockets behave similarly, which chemical scaffolds transfer across targets, which assays are comparable, and which signals are useful in a given biological context.
 
-As an example, suppose we screen three candidate molecules $\beta^1, \beta^2, \beta^3$ against a target and the world model predicts how each will affect a downstream phenotypic response. An affinity model may predict that $\beta^1$ and $\beta^2$ should both strongly inhibit the pathway, while $\beta^3$ has a weaker predicted effect. After running the experiment, $\beta^1$ inhibits as expected, $\beta^3$ shows the predicted weak effect, but $\beta^2$ does nothing despite a confident binding prediction. That discrepancy is the interesting case. The world model does not just flag $\beta^2$ as a miss; it provides a framework for asking *why*: was the affinity prediction wrong, or did the molecule bind but fail to perturb the relevant downstream biology? This gets more intersting for small moelcule discovery as we go one level up and ask what are the similarities between working and failing moleucles in a given biological context.
+As an example, suppose we screen three candidate molecules $\beta^1, \beta^2, \beta^3$ against a target and the world model predicts how each will affect a downstream phenotypic response. An affinity model may predict that $\beta^1$ and $\beta^2$ should both strongly inhibit the pathway, while $\beta^3$ has a weaker predicted effect. After running the experiment, $\beta^1$ inhibits as expected, $\beta^3$ shows the predicted weak effect, but $\beta^2$ does nothing despite a confident binding prediction. That discrepancy is the interesting case. The world model does not just flag $\beta^2$ as a miss; it provides a framework for asking _why_: was the affinity prediction wrong, or did the molecule bind but fail to perturb the relevant downstream biology? This gets more intersting for small moelcule discovery as we go one level up and ask what are the similarities between working and failing moleucles in a given biological context.
 
 <div id="molecule-viz" style="width:100%;height:260px;margin:1.8rem 0;border-radius:12px;overflow:hidden;background:#faf8ff;box-shadow:0 2px 16px rgba(120,100,180,0.08);"></div>
 
-Combining these two ideas, we can ask a joint question: given a structural hypothesis *and* a candidate molecule, does the world model predict that the downstream response falls within a therapeutically useful range? A correct structure paired with the right molecule should yield a tight, well-placed prediction. An approximate structure widens the uncertainty, and a wrong structure shifts the prediction away from the therapeutic window entirely. This is where the structural hypothesis testing and the molecule screening feed into the same decision: which combination of structure and molecule is worth pursuing next?
+Combining these two ideas, we can ask a joint question: given a structural hypothesis _and_ a candidate molecule, does the world model predict that the downstream response falls within a therapeutically useful range? A correct structure paired with the right molecule should yield a tight, well-placed prediction. An approximate structure widens the uncertainty, and a wrong structure shifts the prediction away from the therapeutic window entirely. This is where the structural hypothesis testing and the molecule screening feed into the same decision: which combination of structure and molecule is worth pursuing next?
 
 This also surfaces a deeper question that biologists care about. For a given disease, is this even the right target to be drugging in the first place? If the best available structure paired with the most promising molecule still places the predicted response outside the therapeutic window, that is evidence that the target itself may not be relevant to the disease phenotype. The world model can help separate "wrong molecule" from "wrong structure" from "wrong target," and each of those failure modes points to a fundamentally different next step.
 
@@ -1135,4 +1136,3 @@ The useful world model is not the one that predicts everything. It is the one th
   else document.addEventListener('DOMContentLoaded', function () { new p5(sketch3); });
 })();
 </script>
-
