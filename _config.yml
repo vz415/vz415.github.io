@@ -126,6 +126,7 @@ analytics:
   openpanel: # your Openpanel analytics client ID (format: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX)
   cloudflare: # your Cloudflare Web Analytics beacon token (32 hex characters)
 enable_simple_analytics: false # Simple Analytics identifies a site by its domain, so it has no ID to set above
+goatcounter_analytics: vzaballa # your GoatCounter site code (the XXX in XXX.goatcounter.com)
 
 # For Google Search Console, see https://support.google.com/webmasters/answer/9008080?hl=en#meta_tag_verification&zippy=%2Chtml-tag
 google_site_verification: # your google-site-verification ID (Google Search Console)
@@ -468,6 +469,7 @@ lazy_loading_images: true # enables lazy loading of images (recommended)
 # Optional Features
 # -----------------------------------------------------------------------------
 
+enable_goatcounter_analytics: true # enables GoatCounter analytics (https://www.goatcounter.com/)
 enable_google_verification: false # enables google site verification
 enable_bing_verification: false # enables bing site verification
 enable_cookie_consent: false # enables GDPR-compliant cookie consent dialog (https://github.com/orestbida/cookieconsent)
