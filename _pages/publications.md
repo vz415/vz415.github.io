@@ -25,8 +25,8 @@ _styles: |
 <!-- _pages/publications.md -->
 
 <div class="pub-view-toggle">
-  <button type="button" class="active" data-view="topic">By topic</button>
-  <button type="button" data-view="year">By year</button>
+  <button type="button" class="active" data-view="year">By year</button>
+  <button type="button" data-view="topic">By topic</button>
 </div>
 
 <!-- Bibsearch Feature -->
@@ -35,7 +35,7 @@ _styles: |
 
 <div class="publications">
 
-<div class="pub-view" id="pub-view-topic">
+<div class="pub-view" id="pub-view-topic" hidden>
 <h2 class="bibliography">Generative Models</h2>
 {% bibliography --group_by none --query @*[topic~=gen] %}
 <h2 class="bibliography">Stochastic Processes and Monte Carlo</h2>
@@ -48,7 +48,7 @@ _styles: |
 {% bibliography --group_by none --query @*[topic~=llmsci] %}
 </div>
 
-<div class="pub-view" id="pub-view-year" hidden>
+<div class="pub-view" id="pub-view-year">
 {% bibliography %}
 </div>
 
