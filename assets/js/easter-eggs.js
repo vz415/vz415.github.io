@@ -1,0 +1,1 @@
+document.addEventListener("DOMContentLoaded",()=>{const e=document.querySelector(".profile img");e&&(e.title="one sample from p(Vincent | data)")});
