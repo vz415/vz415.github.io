@@ -1,1 +1,4 @@
-User-agent: * Disallow: true Sitemap: https://vz415.github.io/sitemap.xml
+User-agent: *
+Disallow: true
+
+Sitemap: https://vz415.github.io/sitemap.xml
