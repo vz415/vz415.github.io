@@ -3,13 +3,8 @@
   so this is included from the local _includes/plugins/al_analytics_scripts.liquid override.
 {% endcomment %}
 <style>
-  /* Accent colors from the Ueno Culture & Creativity Hub palette: teal in light mode,
-     cornflower blue in dark mode (teal is too dark to read as link text on the dark background). */
-  :root {
-    --global-theme-color: #1a7c8a;
-    --global-hover-color: #1a7c8a;
-    --global-code-bg-color: rgba(26, 124, 138, 0.05);
-  }
+  /* Dark-mode accent from the Ueno Culture & Creativity Hub palette (cornflower blue).
+     Light mode keeps the theme's default purple. */
   html[data-theme='dark'] {
     --global-theme-color: #6fa8dc;
     --global-hover-color: #6fa8dc;
