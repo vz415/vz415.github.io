@@ -1,0 +1,14 @@
+{% comment %}
+  Site-wide additions. al_folio_core has no hook for custom scripts or styles,
+  so this is included from the local _includes/plugins/al_analytics_scripts.liquid override.
+{% endcomment %}
+<style>
+  /* Badge labels are white in both color modes. The theme sets badge text to the card
+     background (dark in dark mode), and venue badges from _data/venues.yml wrap the label
+     in a <div> that takes the body text color (dark in light mode). */
+  .publications ol.bibliography li .abbr abbr.badge,
+  .publications ol.bibliography li .abbr abbr.badge * {
+    color: #fff !important;
+  }
+</style>
+<script defer src="{{ '/assets/js/easter-eggs.js' | relative_url | bust_file_cache }}"></script>

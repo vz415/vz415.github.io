@@ -6,7 +6,7 @@ overrides:
     gem_version: 1.0.15
     upstream_path: _includes/plugins/al_analytics_scripts.liquid
     upstream_sha256: 49c4fa14ad2c1661585a569b79d9897b79c0f4ba7e2278b6c22ed1c0b95da116
-    local_sha256: 016207c02d7ff7376f7f6972b716db9274bee42d7c33cb792df97a8bd24650fe
+    local_sha256: 107060ce028f3bd5d42aaf2cc0ec492272a8884802103805ba98b2df0e1deca8
     acknowledged_at: "2026-10-06"
   _layouts/cv.liquid:
     owner: al_folio_core

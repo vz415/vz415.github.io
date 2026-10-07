@@ -1,7 +1,7 @@
 {% comment %}
   Parse-safe wrapper for al_analytics custom tag.
   Local override: also loads GoatCounter, which al_analytics does not support,
-  and the site's easter eggs (the theme has no other site-wide script hook).
+  and _includes/site_extras.liquid (the theme has no other site-wide hook).
 {% endcomment %}
 {% al_analytics_scripts %}
 {% if site.enable_goatcounter_analytics and site.goatcounter_analytics %}
@@ -12,4 +12,4 @@
     src="https://gc.zgo.at/count.js"
   ></script>
 {% endif %}
-<script defer src="{{ '/assets/js/easter-eggs.js' | relative_url | bust_file_cache }}"></script>
+{% include site_extras.liquid %}
