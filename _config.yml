@@ -404,6 +404,7 @@ filtered_bibtex_keywords:
     hal,
     html,
     inspirehep_id,
+    note,
     pdf,
     pmid,
     poster,
