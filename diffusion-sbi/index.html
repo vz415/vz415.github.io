@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scalable Diffusion SBI for Compositional Inference under Simulator Misspecification</title>
+<meta name="description" content="Sampling and fine-tuning methods that let one pretrained diffusion model compose many observations, respect hierarchical structure, and adapt to a misspecified simulator.">
+<meta property="og:title" content="Scalable Diffusion SBI for Compositional Inference under Simulator Misspecification">
+<meta property="og:description" content="Compose observations, add hierarchy at sampling time, and fine-tune against real data with one pretrained diffusion model.">
+<meta property="og:image" content="assets/figs/overview.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<nav class="sitenav" aria-label="Sections">
+  <div class="wrap">
+    <a class="sitenav-home" href="#top">Diffusion SBI</a>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#composition">Composition</a></li>
+      <li><a href="#hierarchy">Hierarchy</a></li>
+      <li><a href="#fine-tuning">Fine-tuning</a></li>
+      <li><a href="#bmp">BMP signaling</a></li>
+      <li><a href="#geometry">Geometry</a></li>
+      <li><a href="#takeaways">Results</a></li>
+      <li><a href="#cite">Citation</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero wrap" id="top">
+  <div class="hero-top">
+    <div class="hero-text">
+      <h1>Scalable Diffusion SBI for Compositional Inference under Simulator Misspecification</h1>
+      <p class="authors">Vincent D. Zaballa and Elliot E. Hui</p>
+      <p class="affil">University of California, Irvine</p>
+
+      <!-- LINKS: replace the aria-disabled span with <a class="btn" href="..."> once the code repo is public. -->
+      <div class="actions">
+        <a class="btn" href="https://arxiv.org/abs/2609.36950">Paper on arXiv</a>
+        <span class="btn" aria-disabled="true">Code (coming soon)</span>
+        <a class="btn btn-quiet" href="#cite">BibTeX</a>
+      </div>
+    </div>
+
+    <!-- VIDEO: to swap in the final cut, replace assets/video/summary.mp4 and assets/video/summary-poster.jpg. -->
+    <figure class="hero-video">
+      <video controls autoplay muted loop playsinline preload="metadata" poster="assets/video/summary-poster.jpg" width="1080" height="1080" aria-label="Silent three-minute slide summary of the paper">
+        <source src="assets/video/summary.mp4" type="video/mp4">
+      </video>
+      <figcaption>Three-minute summary of the paper (no sound).</figcaption>
+    </figure>
+  </div>
+
+  <p class="lede">Simulation-based inference rarely means conditioning on one observation from a perfect simulator. Real datasets contain many heterogeneous observations, latent variables shared across some groups and specific to others, and systematic gaps between the simulator and the system it describes. We treat a pretrained diffusion model as a reusable inference engine that handles all three without being retrained for each new arrangement of the data.</p>
+
+  <figure class="fig">
+    <div class="fig-scroll"><img loading="lazy" src="assets/figs/overview.png" width="1040" height="357" alt="Three-panel schematic. Left: per-observation scores are combined by a composition-aware SDE with a new diffusion coefficient. Middle: shared parameters exchange updates with group-specific latent states. Right: a heat map over two design axes shows path divergence concentrated where simulator and data disagree."></div>
+    <figcaption>Compositional sampling combines observations with a derived diffusion coefficient \(g_n(t)\) (left). Hierarchical blockwise diffusion sampling alternates updates of shared parameters \(\theta\) and group-specific states \(R_k\) (middle). Path divergence \(\mathcal{A}(\theta^{\mathrm{ref}},\xi)\) maps how much fine-tuning changed the model at each experimental design (right).</figcaption>
+  </figure>
+</header>
+
+<main>
+
+<section id="overview" class="wrap">
+  <h2>What does the framework do?</h2>
+  <div class="prose">
+    <p>We start from a Simformer (<a class="cite" href="#ref-gloeckler">Gloeckler et al., 2024</a>), a masked diffusion transformer trained with denoising score matching on simulator draws of parameters \(\theta\), observations \(y\), and experimental designs \(\xi\). Because any subset of variables can be conditioned on, the same network answers posterior queries \(p(\theta\mid y,\xi)\) and likelihood queries \(p(y\mid\theta,\xi)\). Everything below happens after pretraining.</p>
+  </div>
+
+  <div class="trio">
+    <a href="#composition">
+      <h3>How are many observations combined?</h3>
+      <p>Combine per-observation posterior scores with a diffusion coefficient that depends on how many observations there are.</p>
+    </a>
+    <a href="#hierarchy">
+      <h3>How is hierarchical structure handled?</h3>
+      <p>Infer shared parameters and group-specific latent states, with the grouping declared only when sampling.</p>
+    </a>
+    <a href="#fine-tuning">
+      <h3>What if the simulator is misspecified?</h3>
+      <p>Fine-tune the likelihood against observations, carry the correction into the posterior, and locate where the model changed.</p>
+    </a>
+  </div>
+
+  <div class="prose">
+    <p>The application that motivated this combination is a mechanistic model of Bone Morphogenetic Protein (BMP) signaling, where ligands bind pairs of receptors and the resulting complexes drive a transcriptional response.</p>
+  </div>
+
+  <div class="tablewrap narrow">
+    <table>
+      <caption>How the inference variables map onto the BMP model</caption>
+      <thead><tr><th>Symbol</th><th>Meaning in the BMP model</th><th class="num">Dimension</th></tr></thead>
+      <tbody>
+        <tr><td>\(\xi\)</td><td>Experimental design, the doses of five ligands</td><td class="num">5</td></tr>
+        <tr><td>\(\theta\)</td><td>Binding affinities and phosphorylation efficiencies shared by all cell lines</td><td class="num">60</td></tr>
+        <tr><td>\(R^k\)</td><td>Receptor state of cell line \(k\)</td><td class="num">5</td></tr>
+        <tr><td>\(y\)</td><td>Steady-state SMAD response</td><td class="num">1</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="composition" class="wrap">
+  <h2>The diffusion coefficient depends on the number of observations</h2>
+  <div class="prose">
+    <p>Under conditional independence, the posterior given \(n\) observations factorizes into single-observation posteriors, so one score network evaluated \(n\) times can stand in for a model trained on the whole set. F-NPSE (<a class="cite" href="#ref-geffner">Geffner et al., 2023</a>) uses this in discrete time, and its reverse transitions contract as \(n\) grows. We carry that contraction into continuous time by keeping the variance-preserving drift and prescribing a smaller accumulated noise variance, which fixes the diffusion coefficient.</p>
+    <p class="eq">\[ g_n(t)^2=\beta(t)\,\frac{1+(n-1)\bigl(1-\alpha(t)\bigr)^2}{\bigl[1+(n-1)\bigl(1-\alpha(t)\bigr)\bigr]^2} \]</p>
+    <p>Here \(\alpha(t)\) is the cumulative squared signal retention and \(\beta(t)\) the usual noise rate. One observation recovers the ordinary VP-SDE. With more, the coefficient falls toward \(\beta(t)/n\) at high noise. The resulting sampler, F-NPSE-SDE, needs only score evaluations. It skips the score Jacobians of JAC and the auxiliary covariance estimates of GAUSS (<a class="cite" href="#ref-linhart">Linhart et al., 2026</a>).</p>
+  </div>
+
+  <div class="widget" id="gn-widget">
+    <div class="widget-head">
+      <h3>How does the schedule change with the number of observations?</h3>
+      <div class="widget-controls">
+        <label for="n-slider">Observations <output id="n-out" for="n-slider">32</output></label>
+        <input id="n-slider" type="range" min="0" max="1000" value="492" step="1">
+        <div class="presets" role="group" aria-label="Preset observation counts">
+          <button type="button" data-n="1">1</button>
+          <button type="button" data-n="8">8</button>
+          <button type="button" data-n="32">32</button>
+          <button type="button" data-n="100">100</button>
+          <button type="button" data-n="1000">1000</button>
+        </div>
+      </div>
+    </div>
+    <svg id="gn-chart" viewBox="0 0 720 360" role="img" aria-labelledby="gn-title"><title id="gn-title">Diffusion variance rate against reverse progress for the ordinary VP schedule and the composition-aware schedule</title></svg>
+    <p class="widget-note" id="gn-note"></p>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <caption>Compositional samplers on an exact-score Gaussian (\(n=100\), 400 predictor steps) and on SLCP with learned scores (\(n=30\)). Mean ± standard deviation over five seeds for the Gaussian and over 25 test instances with one network seed for SLCP. \(L\) is the number of Langevin corrections per step.</caption>
+      <thead>
+        <tr><th rowspan="2">Method</th><th class="grp">Gaussian</th><th class="grp" colspan="3">SLCP</th></tr>
+        <tr><th class="num">max-sW ↓</th><th class="num">sW ↓</th><th class="num">MMD ↓</th><th class="num">C2ST → 0.5</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>GAUSS</td><td class="num best">0.24 ± 0.23</td><td class="num best">0.45 ± 0.18</td><td class="num">0.05 ± 0.16</td><td class="num">0.97 ± 0.04</td></tr>
+        <tr><td>JAC</td><td class="num">0.26 ± 0.22</td><td class="num">0.53 ± 0.19</td><td class="num best">0.05 ± 0.14</td><td class="num best">0.95 ± 0.05</td></tr>
+        <tr><td>Langevin</td><td class="num">0.52 ± 0.50</td><td class="num">0.81 ± 0.28</td><td class="num">0.13 ± 0.22</td><td class="num">0.97 ± 0.03</td></tr>
+        <tr><td>F-NPSE</td><td class="num">0.29 ± 0.24</td><td class="num">0.83 ± 0.29</td><td class="num">0.11 ± 0.13</td><td class="num">0.98 ± 0.03</td></tr>
+        <tr class="ours rule"><td>F-NPSE-SDE, \(L=1\)</td><td class="num">0.29 ± 0.25</td><td class="num">0.74 ± 0.31</td><td class="num">0.10 ± 0.15</td><td class="num">0.98 ± 0.03</td></tr>
+        <tr class="ours"><td>F-NPSE-SDE, \(L=5\)</td><td class="num">0.31 ± 0.27</td><td class="num">0.73 ± 0.28</td><td class="num">0.10 ± 0.15</td><td class="num">0.98 ± 0.03</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <figure class="fig">
+    <div class="fig-scroll"><img loading="lazy" src="assets/figs/gaussian-sweep.svg" width="902" height="307" alt="Two line charts against number of observations. The left shows the reduction in sliced Wasserstein distance from the derived coefficient, positive for every n above 1. The right shows step size relative to the stability limit, which crosses 1 for the ordinary schedule and stays near 0 for the derived one."></div>
+    <figcaption>Exact-score Gaussian benchmark with 400 predictor steps and one Langevin correction per step. Left, the reduction in endpoint sliced Wasserstein distance from using \(g_n(t)^2\) in place of \(\beta(t)\) at matched cost, with 95% intervals over five paired seeds. Right, step size relative to the local contraction limit. The ordinary schedule crosses 1 as \(n\) grows and the derived coefficient stays below it.</figcaption>
+  </figure>
+
+  <aside class="finding">
+    <h3>Finding</h3>
+    <p>On the Gaussian benchmark F-NPSE-SDE is competitive with GAUSS and JAC and matches F-NPSE. On SLCP, GAUSS and JAC remain the most accurate, while F-NPSE-SDE improves on Langevin and F-NPSE in sliced Wasserstein distance and MMD at the cost of score evaluations alone.</p>
+    <p>The saving matters most inside HBDS, where composition is repeated in every block update. On the BMP model with 940 experimental designs, HBDS sampling took about one hour with F-NPSE-SDE and more than ten hours with JAC, and GAUSS ran out of GPU memory while estimating its covariances.</p>
+    <dl class="costs">
+      <div class="ours"><dt>F-NPSE-SDE</dt><dd>≈ 1 h</dd></div>
+      <div><dt>JAC</dt><dd>&gt; 10 h</dd></div>
+      <div><dt>GAUSS</dt><dd>GPU memory limit</dd></div>
+    </dl>
+  </aside>
+</section>
+
+<section id="hierarchy" class="wrap">
+  <h2>HBDS introduces hierarchical structure at sampling time</h2>
+  <div class="prose">
+    <p>Pooling every observation into one compositional posterior assumes they all share the same latent variables, and grouped data, such as the receptor states \(R^k\) of the BMP model, break that assumption. Each of the four cell lines has its own \(R^k\), while the biophysical parameters \(\theta\) are common to all of them.</p>
+    <p>Hierarchical Blockwise Diffusion Sampling (HBDS) keeps one shared parameter state and a separate latent state per group. At every reverse-diffusion time each group state is updated from its own data and the current shared parameters, then the shared parameters are updated from all groups. The pretrained network is reused unchanged, with no hierarchical estimator to train and no need to tokenize the whole dataset.</p>
+    <p>The toy model below isolates this structure. Each group \(g\) has a sign-valued latent \(z_g\), all groups share one parameter \(\theta\), and \(x_{gi}\) is observation \(i\) in group \(g\).</p>
+    <p class="eq">\[ z_g\sim\mathrm{Rad}\!\left(\tfrac12\right),\qquad \theta\sim\mathcal{N}(0,1),\qquad x_{gi}\mid\theta,z_g\sim\mathcal{N}(5z_g+\theta,\,1). \]</p>
+    <p>\(\mathrm{Rad}(\tfrac12)\) gives the two signs equal probability, so the two groups sit ten units apart when their signs differ.</p>
+  </div>
+
+  <figure class="fig">
+    <div class="fig-scroll"><img loading="lazy" src="assets/figs/hbds-toy.svg" width="730" height="288" alt="Two scatter panels of sampled latent state against shared parameter. Pooled sampling puts most samples at one latent value. HBDS gives one cluster per group at the same shared parameter values."></div>
+    <figcaption>A toy with shared \(\theta\) and a sign-valued latent per group, using learned scores and 20 observations, ten from each group. Pooled sampling ties both groups to one latent. HBDS keeps a latent per group at a common \(\theta\).</figcaption>
+  </figure>
+
+  <aside class="finding">
+    <h3>Finding</h3>
+    <p>Pooled sampling cannot represent groups that need different latent modes. HBDS maintains separate group states alongside one globally consistent parameter vector, using a single pretrained model.</p>
+  </aside>
+</section>
+
+<section id="fine-tuning" class="wrap">
+  <h2>Path divergence shows where fine-tuning changed the model</h2>
+  <div class="prose">
+    <p>A surrogate trained on simulations inherits the simulator's errors. We adapt it to observed data by sampling responses from the learned likelihood at a fixed reference parameter \(\theta^{\mathrm{ref}}\), scoring them against observations with a negative mean-squared-error reward, and differentiating through the sampler. A path-space KL penalty holds the fine-tuned (FT) model near the pretrained (PT) one.</p>
+  </div>
+
+  <figure class="fig">
+    <div class="fig-scroll"><img loading="lazy" src="assets/figs/finetuning-schematic.svg" width="820" alt="Schematic of likelihood fine-tuning. Generated responses are compared with observations, and gradients flow back through sampling into token embeddings, FiLM layers, and the score network."></div>
+    <figcaption>Gradients through sampling update token embeddings, FiLM layers, and the score network. Likelihood and posterior queries share those embeddings, which is how a likelihood-side correction reaches the posterior.</figcaption>
+  </figure>
+
+  <div class="prose">
+    <p>Fine-tuning changes the law of the whole sampling trajectory, and Girsanov's theorem gives that change in closed form.</p>
+    <p class="eq">\[ \mathcal{A}(\theta,\xi):=\mathrm{KL}\bigl(\mathbb{P}_{\phi}^{\theta,\xi}\,\big\|\,\mathbb{P}_{\phi_0}^{\theta,\xi}\bigr)=\tfrac12\,\mathbb{E}_{\mathbb{P}_{\phi}^{\theta,\xi}}\!\left[\int_0^T g(t)^2\,\bigl\|s_{\phi}^{y}-s_{\phi_0}^{y}\bigr\|_2^2\,dt\right] \]</p>
+    <p>Evaluated across designs at the reference parameter, \(\mathcal{A}\) is a map of how far the model was moved at each experimental condition. It measures the size of the adaptation and says nothing on its own about whether predictions improved, so we always read it next to predictive error.</p>
+  </div>
+
+  <figure class="fig" id="path-law-geometry">
+    <div class="fig-scroll"><img loading="lazy" src="assets/figs/path-law-geometry.svg" width="560" height="365" alt="Two curved surfaces over axes labelled parameters and conditions. The lower blue surface is the simulator-trained family of path laws and the upper green surface is the data-adapted family. They touch at one corner, labelled no adaptation, and separate elsewhere. Arrows from the lower to the upper surface are labelled model adaptation. A small tangent plane sits on the upper surface at one condition."></div>
+    <figcaption>Each pair of parameters \(\theta\) and conditions \(\xi\) gives one sampling path law, so each model traces out a surface of path laws. Fine-tuning moves the simulator-trained surface \(\mathcal{M}_{\phi_0}\) to the data-adapted surface \(\mathcal{M}_{\phi_*}\). \(\mathcal{A}(\theta,\xi)\) is the size of that move at one point, and it is zero where the model was left unchanged. The tangent plane marks the local Fisher geometry on the adapted surface.</figcaption>
+  </figure>
+
+  <div class="tablewrap narrow">
+    <table class="matrix">
+      <caption>Reading path divergence together with the change in predictive error at the same design</caption>
+      <thead><tr><th>\(\mathcal{A}(\theta,\xi)\)</th><th>Error improves</th><th>Error does not improve</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Small</th><td>Adequate simulator or mild correction</td><td>Under-correction</td></tr>
+        <tr><th scope="row">Large</th><td>Corrected misspecification</td><td>Over-correction or forgetting</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="sub">Does path divergence find a known discrepancy?</h3>
+  <div class="prose">
+    <p>A linear-Gaussian simulator over a two-dimensional design space omits a localized bump \(h(\xi)\) that is present in the observations. We fine-tune on ten noisy observations and compare predictions over the full design grid.</p>
+  </div>
+
+  <figure class="fig">
+    <div class="fig-scroll"><img loading="lazy" src="assets/figs/toy-misspecification.svg" width="1037" height="341" alt="Four heat maps over design space: the known discrepancy, pretrained absolute error, fine-tuned absolute error, and path divergence. Path divergence is concentrated where the discrepancy is."></div>
+    <figcaption>The known discrepancy \(h(\xi)\), PT and FT absolute error on a shared scale, and path divergence \(\mathcal{A}(\theta^{\mathrm{ref}},\xi)\), with \(\lambda=0.1\).</figcaption>
+  </figure>
+
+  <div class="tablewrap narrow">
+    <table>
+      <caption>Fine-tuning on the analytic toy. Improvement is PT error divided by FT error, so values below 1× mean fine-tuning made things worse.</caption>
+      <thead><tr><th>Metric</th><th class="num">PT</th><th class="num">FT</th><th class="num">Improvement</th></tr></thead>
+      <tbody>
+        <tr><td>Posterior \(W_2\) ↓</td><td class="num">0.09</td><td class="num best">0.07</td><td class="num">1.35×</td></tr>
+        <tr><td>Posterior mean error ↓</td><td class="num">0.08</td><td class="num best">0.03</td><td class="num">2.88×</td></tr>
+        <tr><td>Likelihood RMSE, correctly specified region ↓</td><td class="num best">0.05</td><td class="num">0.26</td><td class="num">0.18×</td></tr>
+        <tr><td>Likelihood RMSE, misspecified region ↓</td><td class="num">0.45</td><td class="num best">0.30</td><td class="num">1.49×</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="prose">
+    <p>Two controls trade correction against preservation. The penalty strength \(\lambda\) acts during training. Autoguidance acts at sampling time and needs no retraining.</p>
+  </div>
+
+  <figure class="fig">
+    <div class="fig-scroll"><img loading="lazy" src="assets/figs/lambda-sweep.svg" width="1037" height="432" alt="Two rows of heat maps across six regularization strengths. The top row shows fine-tuned absolute error and the bottom row path divergence, which fades as regularization increases."></div>
+    <figcaption>Increasing \(\lambda\) from \(10^{-4}\) to \(10\). Stronger regularization keeps more of the PT model and weakens the correction near the bump. Circles mark observed designs and dashed contours enclose \(h(\xi)\ge 0.1\).</figcaption>
+  </figure>
+
+  <div class="prose">
+    <p>Fine-tuning corrects the model near the discrepancy and adds error elsewhere, while the pretrained model does the opposite. Autoguidance (<a class="cite" href="#ref-karras">Karras et al., 2024</a>) combines the two during sampling with the score</p>
+    <p class="eq">\[ s_w^{y}=s_{\mathrm{PT}}^{y}+w\,\bigl(s_{\mathrm{FT}}^{y}-s_{\mathrm{PT}}^{y}\bigr), \]</p>
+    <p>where \(w=0\) recovers the PT model and \(w=1\) the FT model. An intermediate weight keeps the correction near the bump and reduces the error that fine-tuning introduced at designs far from the observations, which lowers error over the whole design grid. Neither model is retrained, and the only added cost is one more score evaluation per sampling step.</p>
+  </div>
+
+  <figure class="fig">
+    <div class="fig-scroll"><img loading="lazy" src="assets/figs/autoguidance.svg" width="1037" height="490" alt="Two rows of heat maps across five autoguidance weights from pretrained to fine-tuned. Intermediate weights show lower average error and smaller path divergence."></div>
+    <figcaption>Autoguidance with weight \(w\) from PT (0) to FT (1). At \(w=0.5\) the full-grid mean absolute error is 0.12, against 0.14 for PT and 0.15 for FT. The weight was chosen retrospectively in a single-seed comparison.</figcaption>
+  </figure>
+
+  <aside class="finding">
+    <h3>Finding</h3>
+    <p>Fine-tuning lowers error near the omitted bump and raises it elsewhere. Mean path divergence inside the misspecified region is 4.73 times that outside and correlates with the discrepancy (Pearson \(r=0.75\)), so the divergence map shows where the model adapted and the error map shows whether that helped.</p>
+    <p>Autoguidance recovers some of the error that fine-tuning adds. At \(w=0.5\) the mean absolute error over the design grid is 0.12, against 0.14 for the pretrained model and 0.15 for the fine-tuned model, at the cost of one more score evaluation per sampling step. The improvement is not uniform across designs, and the weight was chosen retrospectively in a single-seed comparison.</p>
+  </aside>
+</section>
+
+<section id="bmp" class="wrap">
+  <h2>Fine-tuning with HBDS improves predictive fit on 940 BMP measurements</h2>
+  <div class="prose">
+    <p>We combine fine-tuning with HBDS on 940 measurements from a parent cell line (NMuMG) and three receptor knockdowns. The model has 60 shared biophysical parameters and five receptor quantities per cell line. The fine-tuning reference is the least-squares fit (LSR) that is standard for this model, used as an anchor and not as ground truth.</p>
+  </div>
+
+  <dl class="facts">
+    <div><dt>Measurements</dt><dd>940</dd></div>
+    <div><dt>Cell lines</dt><dd>4</dd></div>
+    <div><dt>Shared parameters</dt><dd>60</dd></div>
+    <div><dt>Receptor quantities per line</dt><dd>5</dd></div>
+  </dl>
+
+  <figure class="fig">
+    <div class="fig-scroll"><img loading="lazy" src="assets/figs/bmp-predictions.svg" width="1037" height="662" alt="Three columns of plots for a BMP4 and BMP10 competition series in NMuMG, the same series in the BMPR2 knockdown, and a BMP4 titration in NMuMG. Rows show predictions against observations, best-fitting least-squares cost group, path divergence, and change in prediction error."></div>
+    <figcaption>From top to bottom, LSR and FT predictions against observations with parameters held at the LSR reference, the LSR cost group that fits each design best, path divergence relative to the median of its series, and the reduction in absolute error from LSR to FT on a symmetric log scale.</figcaption>
+  </figure>
+
+  <div class="prose">
+    <p>With parameters held at the reference, FT improves on the simulator throughout the BMPR2-knockdown competition series and at lower BMP4 doses. In the titration those gains generally coincide with larger path divergence. In the NMuMG competition series adaptation often increases error, which is the case the table above labels over-correction.</p>
+  </div>
+
+  <div class="tablewrap narrow">
+    <table>
+      <caption>Posterior-predictive fit with pooled sampling and HBDS for the PT model, the FT model, and an FT model trained without FiLM. 250 draws and one sampling seed.</caption>
+      <thead><tr><th>Model and sampler</th><th class="num">RMSE ↓</th><th class="num">Median distance ↓</th></tr></thead>
+      <tbody>
+        <tr><td>PT, pooled</td><td class="num">0.58</td><td class="num">1,594.55</td></tr>
+        <tr><td>FT, pooled</td><td class="num">0.36</td><td class="num">66.77</td></tr>
+        <tr><td>FT without FiLM, pooled</td><td class="num">12.30</td><td class="num">4,538.82</td></tr>
+        <tr class="rule"><td>PT, HBDS</td><td class="num">0.78</td><td class="num">194.01</td></tr>
+        <tr class="ours"><td>FT, HBDS</td><td class="num best">0.34</td><td class="num best">14.94</td></tr>
+        <tr><td>FT without FiLM, HBDS</td><td class="num">0.91</td><td class="num">274.61</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="prose">
+    <p>We benchmark fine-tuning against the most relevant existing method, Flow Matching Corrected Posterior Estimation (FMCPE). FMCPE trains a neural posterior estimator on simulations and then corrects it with a smaller calibration set, which we build here from LSR fits. It needs a dedicated posterior model and correction flows for each observation set, so every row with a different number of observations below was retrained. The Simformer reuses one set of weights across observation sets through masking and compositional sampling. FMCPE still gives a direct comparison, because both methods can be scored by the same predictive errors through the BMP simulator.</p>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <caption>Comparison with FMCPE (<a class="cite" href="#ref-ruhlmann">Ruhlmann et al., 2026</a>), which corrects a posterior estimator using calibration pairs built here from LSR fits. Predictive errors through the original BMP simulator on all 940 measurements, 250 parameter draws per run, mean ± SE over three seeds. FMCPE rows use the largest LSR budget at each observation count.</caption>
+      <thead><tr><th>Method</th><th class="num">Observations</th><th class="num">LSR fits</th><th class="num">RMSE ↓</th><th class="num">Median distance ↓</th></tr></thead>
+      <tbody>
+        <tr><td>FMCPE-LSR</td><td class="num">235</td><td class="num">4,816</td><td class="num">0.168 ± 0.011</td><td class="num">136.460 ± 77.855</td></tr>
+        <tr><td>FMCPE-LSR</td><td class="num">470</td><td class="num">4,816</td><td class="num">0.177 ± 0.003</td><td class="num">31.505 ± 10.206</td></tr>
+        <tr><td>FMCPE-LSR</td><td class="num">705</td><td class="num">4,816</td><td class="num">0.168 ± 0.007</td><td class="num">50.355 ± 16.256</td></tr>
+        <tr><td>FMCPE-LSR</td><td class="num">940</td><td class="num">4,816</td><td class="num best">0.175 ± 0.005</td><td class="num">31.051 ± 8.460</td></tr>
+        <tr class="rule"><td>PT BMP Simformer</td><td class="num">940</td><td class="num">0</td><td class="num">0.252 ± 0.003</td><td class="num">11.111 ± 0.116</td></tr>
+        <tr class="ours"><td>FT BMP Simformer</td><td class="num">940</td><td class="num">1</td><td class="num">0.245 ± 0.003</td><td class="num best">10.376 ± 0.058</td></tr>
+      </tbody>
+    </table>
+    <details>
+      <summary>Show all 16 FMCPE budget settings</summary>
+      <table>
+        <thead><tr><th class="num">Observations</th><th class="num">LSR fits</th><th class="num">RMSE ↓</th><th class="num">Median distance ↓</th></tr></thead>
+        <tbody>
+          <tr><td class="num">235</td><td class="num">1,204</td><td class="num">0.242 ± 0.004</td><td class="num">203.661 ± 38.307</td></tr>
+          <tr><td class="num">235</td><td class="num">2,408</td><td class="num">0.231 ± 0.026</td><td class="num">203.451 ± 70.019</td></tr>
+          <tr><td class="num">235</td><td class="num">3,612</td><td class="num">0.184 ± 0.010</td><td class="num">77.887 ± 19.521</td></tr>
+          <tr><td class="num">235</td><td class="num">4,816</td><td class="num">0.168 ± 0.011</td><td class="num">136.460 ± 77.855</td></tr>
+          <tr class="rule"><td class="num">470</td><td class="num">1,204</td><td class="num">0.256 ± 0.008</td><td class="num">283.935 ± 26.484</td></tr>
+          <tr><td class="num">470</td><td class="num">2,408</td><td class="num">0.202 ± 0.006</td><td class="num">108.803 ± 19.193</td></tr>
+          <tr><td class="num">470</td><td class="num">3,612</td><td class="num">0.195 ± 0.003</td><td class="num">154.748 ± 46.537</td></tr>
+          <tr><td class="num">470</td><td class="num">4,816</td><td class="num">0.177 ± 0.003</td><td class="num">31.505 ± 10.206</td></tr>
+          <tr class="rule"><td class="num">705</td><td class="num">1,204</td><td class="num">0.246 ± 0.003</td><td class="num">296.322 ± 88.535</td></tr>
+          <tr><td class="num">705</td><td class="num">2,408</td><td class="num">0.197 ± 0.014</td><td class="num">161.322 ± 41.237</td></tr>
+          <tr><td class="num">705</td><td class="num">3,612</td><td class="num">0.193 ± 0.002</td><td class="num">98.697 ± 18.042</td></tr>
+          <tr><td class="num">705</td><td class="num">4,816</td><td class="num">0.168 ± 0.007</td><td class="num">50.355 ± 16.256</td></tr>
+          <tr class="rule"><td class="num">940</td><td class="num">1,204</td><td class="num">0.270 ± 0.012</td><td class="num">203.950 ± 20.409</td></tr>
+          <tr><td class="num">940</td><td class="num">2,408</td><td class="num">0.210 ± 0.025</td><td class="num">188.117 ± 73.589</td></tr>
+          <tr><td class="num">940</td><td class="num">3,612</td><td class="num">0.186 ± 0.023</td><td class="num">62.011 ± 26.766</td></tr>
+          <tr><td class="num">940</td><td class="num">4,816</td><td class="num">0.175 ± 0.005</td><td class="num">31.051 ± 8.460</td></tr>
+        </tbody>
+      </table>
+    </details>
+    <details>
+      <summary>Show the regularization and Langevin-correction sweep</summary>
+      <table>
+        <caption>Each setting used 250 HBDS draws and one sampling seed. \(L\) is the number of corrector steps per diffusion step. Each cell gives RMSE and median distance.</caption>
+        <thead><tr><th>\(\lambda\)</th><th class="num">\(L=0\)</th><th class="num">\(L=1\)</th><th class="num">\(L=3\)</th><th class="num">\(L=5\)</th></tr></thead>
+        <tbody>
+          <tr><td>\(0\)</td><td class="num">0.29 / 12.16</td><td class="num">0.36 / 12.96</td><td class="num">0.36 / 12.97</td><td class="num">0.36 / 12.97</td></tr>
+          <tr><td>\(10^{-4}\)</td><td class="num">0.30 / 28.15</td><td class="num">0.32 / 89.55</td><td class="num">0.32 / 90.63</td><td class="num">0.32 / 90.87</td></tr>
+          <tr><td>\(5\times10^{-4}\)</td><td class="num">0.28 / 14.30</td><td class="num">0.34 / 14.89</td><td class="num">0.33 / 14.62</td><td class="num">0.34 / 14.94</td></tr>
+          <tr><td>\(10^{-3}\)</td><td class="num">0.34 / 29.97</td><td class="num">0.36 / 41.20</td><td class="num">0.36 / 41.36</td><td class="num">0.36 / 41.86</td></tr>
+          <tr><td>\(10^{-2}\)</td><td class="num">0.33 / 45.26</td><td class="num">0.40 / 93.51</td><td class="num">0.42 / 94.78</td><td class="num">0.41 / 99.30</td></tr>
+          <tr><td>\(10^{-1}\)</td><td class="num">0.30 / 52.17</td><td class="num">0.52 / 157.55</td><td class="num">0.53 / 153.48</td><td class="num">0.48 / 159.86</td></tr>
+          <tr><td>\(1\)</td><td class="num">0.30 / 47.00</td><td class="num">0.40 / 130.73</td><td class="num">0.41 / 134.90</td><td class="num">0.41 / 139.27</td></tr>
+        </tbody>
+      </table>
+    </details>
+  </div>
+
+  <div class="prose">
+    <p>Likelihood fine-tuning is anchored at a single reference \(\theta^{\mathrm{ref}}\), the LSR fit, so one might expect posterior inference to reduce to that point estimate. It does not. The FT posterior marginals generally shift toward the reference relative to pretraining while retaining substantial spread, which indicates that the likelihood-side correction transfers to posterior queries without collapsing inference onto the fine-tuning anchor.</p>
+  </div>
+
+  <figure class="fig">
+    <div class="fig-scroll"><img loading="lazy" src="assets/figs/bmp-posterior-marginals.svg" width="860" alt="Grid of sixty small histograms comparing pretrained and fine-tuned posterior marginals for binding affinities and phosphorylation efficiencies, with a red line at the least-squares reference in each."></div>
+    <figcaption>Posterior marginals for the 30 binding affinities (upper block) and 30 phosphorylation efficiencies (lower block). Purple is PT, green is FT, and red lines mark the LSR reference. FT marginals generally move toward the reference and keep their spread.</figcaption>
+  </figure>
+
+  <aside class="finding">
+    <h3>Finding</h3>
+    <p>Fine-tuning improves posterior-predictive fit over the pretrained model under both samplers, and HBDS improves on pooled sampling for the fine-tuned model (RMSE 0.34 and median distance 14.94, against 0.36 and 66.77). Against FMCPE the fine-tuned model has the lowest median predictive distance, while FMCPE has lower best-draw RMSE. Anchoring at a single reference fit does not collapse the posterior onto it.</p>
+  </aside>
+</section>
+
+<section id="geometry" class="wrap">
+  <h2>What does the path-space Fisher metric say about parameters and designs?</h2>
+  <div class="prose">
+    <p>Path divergence compares two models at the same \((\theta,\xi)\). The same construction also compares one model with itself at nearby conditioning values. Writing \(z=(\theta,\xi)\), the KL divergence between path laws at \(z\) and \(z+\delta z\) is, to second order, \(\tfrac12\,\delta z^{\top}\mathcal{I}_{\phi}^{\mathrm{path}}(z)\,\delta z\) with</p>
+    <p class="eq">\[ \mathcal{I}_{\phi}^{\mathrm{path}}(z)=\mathbb{E}_{Y\sim\mathbb{P}_{\phi}^{z}}\!\left[\int_0^T g(t)^2\,J_z s_{\phi}^{y}(Y_t,t;z)^{\top}J_z s_{\phi}^{y}(Y_t,t;z)\,dt\right]=\begin{bmatrix} I_{\theta\theta} &amp; I_{\theta\xi}\\ I_{\xi\theta} &amp; I_{\xi\xi}\end{bmatrix}. \]</p>
+    <p>This is a Fisher metric on the family of path laws \(\mathcal{M}_{\phi}\). It can be singular where the conditioning variables are not locally identifiable, for example when different parameter combinations give indistinguishable responses.</p>
+  </div>
+
+  <figure class="fig">
+    <div class="fig-scroll"><img loading="lazy" src="assets/figs/joint-fisher-geometry.svg" width="560" height="344" alt="A curved surface of path laws with two marked points that share parameters and differ in design. Below each point is its tangent plane with one arrow for a parameter perturbation and one for a design perturbation. At the first point the two arrows are nearly parallel and span a thin sliver. At the second point they point in clearly different directions and span a wide parallelogram."></div>
+    <figcaption>Tangent planes at two designs \(\xi_a\) and \(\xi_b\) with the same parameters. \(v_\theta\) and \(v_\xi\) are the first-order changes in the path law from perturbing the parameters and the design, and their inner product is \(\delta\theta^{\top}I_{\theta\xi}(z)\,\delta\xi\). At \(\xi_a\) the two are nearly aligned, so a change in parameters looks like a change in design. At \(\xi_b\) they are distinct.</figcaption>
+  </figure>
+
+  <div class="prose">
+    <p>Each block answers a different question.</p>
+    <ul>
+      <li>\(I_{\theta\theta}\) measures how much the path law changes with the mechanistic parameters at a fixed design. Designs where it is large are locally informative about \(\theta\).</li>
+      <li>\(I_{\xi\xi}\) measures how quickly the path law changes across designs. For the pretrained model, large values mark regions where denser simulator coverage would help most.</li>
+      <li>\(I_{\theta\xi}\) measures whether a parameter change and a design change have the same first-order effect.</li>
+    </ul>
+    <p>The paper proposes using these blocks to move a population of reference parameters during fine-tuning, to choose designs, and to weight a fine-tuning curriculum. These are proposed extensions. None of them is implemented or tested in the experiments above.</p>
+  </div>
+</section>
+
+<section id="takeaways" class="wrap">
+  <h2>What are the main results?</h2>
+  <ul class="takeaways">
+    <li><h3>The compositional schedule needs only score evaluations</h3><p>An observation-count-aware diffusion coefficient brings F-NPSE into an SDE sampler that costs only score evaluations.</p></li>
+    <li><h3>HBDS reuses one pretrained model for any grouping</h3><p>Blockwise updates over shared and group-specific states reuse one pretrained network for any grouping.</p></li>
+    <li><h3>Likelihood fine-tuning transfers to the posterior</h3><p>Fine-tuning the likelihood at a fixed reference shifts the posterior without reducing it to a point estimate.</p></li>
+    <li><h3>Path divergence locates where the model adapted</h3><p>Path divergence shows where fine-tuning changed the model. Predictive error shows whether the change was a correction.</p></li>
+  </ul>
+  <div class="prose">
+    <h3 class="sub">What are the limitations?</h3>
+    <p>Compositional sampling and HBDS both rely on approximations to intermediate-time posteriors. Fine-tuning at a fixed reference can improve misspecified regions while degrading regions that were already well modeled, and on the BMP data the comparison with the least-squares fit remains mixed. These results point toward adaptation that varies across experimental designs instead of one global regularization strength.</p>
+  </div>
+</section>
+
+<section id="cite" class="wrap">
+  <h2>Citation</h2>
+  <div class="bibtex">
+    <button type="button" id="copy-bib">Copy BibTeX</button>
+<pre id="bib">@article{zaballa2026scalable,
+  title   = {Scalable Diffusion {SBI} for Compositional Inference
+             under Simulator Misspecification},
+  author  = {Zaballa, Vincent D. and Hui, Elliot E.},
+  journal = {arXiv preprint arXiv:2609.36950},
+  year    = {2026},
+  url     = {https://arxiv.org/abs/2609.36950}
+}</pre>
+  </div>
+</section>
+
+<section id="references" class="wrap">
+  <h2>References</h2>
+  <ol class="refs">
+    <li id="ref-geffner">Geffner, T., Papamakarios, G., and Mnih, A. (2023). <a href="https://proceedings.mlr.press/v202/geffner23a.html">Compositional score modeling for simulation-based inference</a>. <i>International Conference on Machine Learning</i>, PMLR 202, 11098–11116.</li>
+    <li id="ref-gloeckler">Gloeckler, M., Deistler, M., Weilbach, C. D., Wood, F., and Macke, J. H. (2024). <a href="https://proceedings.mlr.press/v235/gloeckler24a.html">All-in-one simulation-based inference</a>. <i>International Conference on Machine Learning</i>, PMLR 235, 15735–15766.</li>
+    <li id="ref-karras">Karras, T., Aittala, M., Kynkäänniemi, T., Lehtinen, J., Aila, T., and Laine, S. (2024). <a href="https://arxiv.org/abs/2406.02507">Guiding a diffusion model with a bad version of itself</a>. <i>Advances in Neural Information Processing Systems</i>.</li>
+    <li id="ref-linhart">Linhart, J., Victorino Cardoso, G., Gramfort, A., Le Corff, S., and Rodrigues, P. L. C. (2026). <a href="https://arxiv.org/abs/2404.07593">Diffusion posterior sampling for simulation-based inference in tall data settings</a>. <i>Transactions on Machine Learning Research</i>.</li>
+    <li id="ref-ruhlmann">Ruhlmann, P.-L., Arbel, M., Forbes, F., and Rodrigues, P. L. C. (2026). <a href="https://arxiv.org/abs/2509.23385">Flow matching calibration for simulation-based inference under model misspecification</a>. <i>International Conference on Machine Learning</i>.</li>
+  </ol>
+</section>
+
+</main>
+
+<footer class="wrap">
+  <p>University of California, Irvine. Figures and tables are from the paper. <a href="https://vz415.github.io/">Vincent Zaballa's site</a></p>
+</footer>
+
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script defer src="assets/site.js"></script>
+</body>
+</html>
