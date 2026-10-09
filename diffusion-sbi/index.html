@@ -7,12 +7,12 @@
 <meta name="description" content="Sampling and fine-tuning methods that let one pretrained diffusion model compose many observations, respect hierarchical structure, and adapt to a misspecified simulator.">
 <meta property="og:title" content="Scalable Diffusion SBI for Compositional Inference under Simulator Misspecification">
 <meta property="og:description" content="Compose observations, add hierarchy at sampling time, and fine-tune against real data with one pretrained diffusion model.">
-<meta property="og:image" content="assets/figs/overview.png">
+<meta property="og:image" content="static/figs/overview.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
-<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="static/style.css">
 </head>
 <body>
 
@@ -47,10 +47,10 @@
       </div>
     </div>
 
-    <!-- VIDEO: to swap in the final cut, replace assets/video/summary.mp4 and assets/video/summary-poster.jpg. -->
+    <!-- VIDEO: to swap in the final cut, replace static/video/summary.mp4 and static/video/summary-poster.jpg. -->
     <figure class="hero-video">
-      <video controls autoplay muted loop playsinline preload="metadata" poster="assets/video/summary-poster.jpg" width="1080" height="1080" aria-label="Silent three-minute slide summary of the paper">
-        <source src="assets/video/summary.mp4" type="video/mp4">
+      <video controls autoplay muted loop playsinline preload="metadata" poster="static/video/summary-poster.jpg" width="1080" height="1080" aria-label="Silent three-minute slide summary of the paper">
+        <source src="static/video/summary.mp4" type="video/mp4">
       </video>
       <figcaption>Three-minute summary of the paper (no sound).</figcaption>
     </figure>
@@ -59,7 +59,7 @@
   <p class="lede">Simulation-based inference rarely means conditioning on one observation from a perfect simulator. Real datasets contain many heterogeneous observations, latent variables shared across some groups and specific to others, and systematic gaps between the simulator and the system it describes. We treat a pretrained diffusion model as a reusable inference engine that handles all three without being retrained for each new arrangement of the data.</p>
 
   <figure class="fig">
-    <div class="fig-scroll"><img loading="lazy" src="assets/figs/overview.png" width="1040" height="357" alt="Three-panel schematic. Left: per-observation scores are combined by a composition-aware SDE with a new diffusion coefficient. Middle: shared parameters exchange updates with group-specific latent states. Right: a heat map over two design axes shows path divergence concentrated where simulator and data disagree."></div>
+    <div class="fig-scroll"><img loading="lazy" src="static/figs/overview.png" width="1040" height="357" alt="Three-panel schematic. Left: per-observation scores are combined by a composition-aware SDE with a new diffusion coefficient. Middle: shared parameters exchange updates with group-specific latent states. Right: a heat map over two design axes shows path divergence concentrated where simulator and data disagree."></div>
     <figcaption>Compositional sampling combines observations with a derived diffusion coefficient \(g_n(t)\) (left). Hierarchical blockwise diffusion sampling alternates updates of shared parameters \(\theta\) and group-specific states \(R_k\) (middle). Path divergence \(\mathcal{A}(\theta^{\mathrm{ref}},\xi)\) maps how much fine-tuning changed the model at each experimental design (right).</figcaption>
   </figure>
 </header>
@@ -151,7 +151,7 @@
   </div>
 
   <figure class="fig">
-    <div class="fig-scroll"><img loading="lazy" src="assets/figs/gaussian-sweep.svg" width="902" height="307" alt="Two line charts against number of observations. The left shows the reduction in sliced Wasserstein distance from the derived coefficient, positive for every n above 1. The right shows step size relative to the stability limit, which crosses 1 for the ordinary schedule and stays near 0 for the derived one."></div>
+    <div class="fig-scroll"><img loading="lazy" src="static/figs/gaussian-sweep.svg" width="902" height="307" alt="Two line charts against number of observations. The left shows the reduction in sliced Wasserstein distance from the derived coefficient, positive for every n above 1. The right shows step size relative to the stability limit, which crosses 1 for the ordinary schedule and stays near 0 for the derived one."></div>
     <figcaption>Exact-score Gaussian benchmark with 400 predictor steps and one Langevin correction per step. Left, the reduction in endpoint sliced Wasserstein distance from using \(g_n(t)^2\) in place of \(\beta(t)\) at matched cost, with 95% intervals over five paired seeds. Right, step size relative to the local contraction limit. The ordinary schedule crosses 1 as \(n\) grows and the derived coefficient stays below it.</figcaption>
   </figure>
 
@@ -178,7 +178,7 @@
   </div>
 
   <figure class="fig">
-    <div class="fig-scroll"><img loading="lazy" src="assets/figs/hbds-toy.svg" width="730" height="288" alt="Two scatter panels of sampled latent state against shared parameter. Pooled sampling puts most samples at one latent value. HBDS gives one cluster per group at the same shared parameter values."></div>
+    <div class="fig-scroll"><img loading="lazy" src="static/figs/hbds-toy.svg" width="730" height="288" alt="Two scatter panels of sampled latent state against shared parameter. Pooled sampling puts most samples at one latent value. HBDS gives one cluster per group at the same shared parameter values."></div>
     <figcaption>A toy with shared \(\theta\) and a sign-valued latent per group, using learned scores and 20 observations, ten from each group. Pooled sampling ties both groups to one latent. HBDS keeps a latent per group at a common \(\theta\).</figcaption>
   </figure>
 
@@ -195,7 +195,7 @@
   </div>
 
   <figure class="fig">
-    <div class="fig-scroll"><img loading="lazy" src="assets/figs/finetuning-schematic.svg" width="820" alt="Schematic of likelihood fine-tuning. Generated responses are compared with observations, and gradients flow back through sampling into token embeddings, FiLM layers, and the score network."></div>
+    <div class="fig-scroll"><img loading="lazy" src="static/figs/finetuning-schematic.svg" width="820" alt="Schematic of likelihood fine-tuning. Generated responses are compared with observations, and gradients flow back through sampling into token embeddings, FiLM layers, and the score network."></div>
     <figcaption>Gradients through sampling update token embeddings, FiLM layers, and the score network. Likelihood and posterior queries share those embeddings, which is how a likelihood-side correction reaches the posterior.</figcaption>
   </figure>
 
@@ -206,7 +206,7 @@
   </div>
 
   <figure class="fig" id="path-law-geometry">
-    <div class="fig-scroll"><img loading="lazy" src="assets/figs/path-law-geometry.svg" width="560" height="365" alt="Two curved surfaces over axes labelled parameters and conditions. The lower blue surface is the simulator-trained family of path laws and the upper green surface is the data-adapted family. They touch at one corner, labelled no adaptation, and separate elsewhere. Arrows from the lower to the upper surface are labelled model adaptation. A small tangent plane sits on the upper surface at one condition."></div>
+    <div class="fig-scroll"><img loading="lazy" src="static/figs/path-law-geometry.svg" width="560" height="365" alt="Two curved surfaces over axes labelled parameters and conditions. The lower blue surface is the simulator-trained family of path laws and the upper green surface is the data-adapted family. They touch at one corner, labelled no adaptation, and separate elsewhere. Arrows from the lower to the upper surface are labelled model adaptation. A small tangent plane sits on the upper surface at one condition."></div>
     <figcaption>Each pair of parameters \(\theta\) and conditions \(\xi\) gives one sampling path law, so each model traces out a surface of path laws. Fine-tuning moves the simulator-trained surface \(\mathcal{M}_{\phi_0}\) to the data-adapted surface \(\mathcal{M}_{\phi_*}\). \(\mathcal{A}(\theta,\xi)\) is the size of that move at one point, and it is zero where the model was left unchanged. The tangent plane marks the local Fisher geometry on the adapted surface.</figcaption>
   </figure>
 
@@ -227,7 +227,7 @@
   </div>
 
   <figure class="fig">
-    <div class="fig-scroll"><img loading="lazy" src="assets/figs/toy-misspecification.svg" width="1037" height="341" alt="Four heat maps over design space: the known discrepancy, pretrained absolute error, fine-tuned absolute error, and path divergence. Path divergence is concentrated where the discrepancy is."></div>
+    <div class="fig-scroll"><img loading="lazy" src="static/figs/toy-misspecification.svg" width="1037" height="341" alt="Four heat maps over design space: the known discrepancy, pretrained absolute error, fine-tuned absolute error, and path divergence. Path divergence is concentrated where the discrepancy is."></div>
     <figcaption>The known discrepancy \(h(\xi)\), PT and FT absolute error on a shared scale, and path divergence \(\mathcal{A}(\theta^{\mathrm{ref}},\xi)\), with \(\lambda=0.1\).</figcaption>
   </figure>
 
@@ -249,7 +249,7 @@
   </div>
 
   <figure class="fig">
-    <div class="fig-scroll"><img loading="lazy" src="assets/figs/lambda-sweep.svg" width="1037" height="432" alt="Two rows of heat maps across six regularization strengths. The top row shows fine-tuned absolute error and the bottom row path divergence, which fades as regularization increases."></div>
+    <div class="fig-scroll"><img loading="lazy" src="static/figs/lambda-sweep.svg" width="1037" height="432" alt="Two rows of heat maps across six regularization strengths. The top row shows fine-tuned absolute error and the bottom row path divergence, which fades as regularization increases."></div>
     <figcaption>Increasing \(\lambda\) from \(10^{-4}\) to \(10\). Stronger regularization keeps more of the PT model and weakens the correction near the bump. Circles mark observed designs and dashed contours enclose \(h(\xi)\ge 0.1\).</figcaption>
   </figure>
 
@@ -260,7 +260,7 @@
   </div>
 
   <figure class="fig">
-    <div class="fig-scroll"><img loading="lazy" src="assets/figs/autoguidance.svg" width="1037" height="490" alt="Two rows of heat maps across five autoguidance weights from pretrained to fine-tuned. Intermediate weights show lower average error and smaller path divergence."></div>
+    <div class="fig-scroll"><img loading="lazy" src="static/figs/autoguidance.svg" width="1037" height="490" alt="Two rows of heat maps across five autoguidance weights from pretrained to fine-tuned. Intermediate weights show lower average error and smaller path divergence."></div>
     <figcaption>Autoguidance with weight \(w\) from PT (0) to FT (1). At \(w=0.5\) the full-grid mean absolute error is 0.12, against 0.14 for PT and 0.15 for FT. The weight was chosen retrospectively in a single-seed comparison.</figcaption>
   </figure>
 
@@ -285,7 +285,7 @@
   </dl>
 
   <figure class="fig">
-    <div class="fig-scroll"><img loading="lazy" src="assets/figs/bmp-predictions.svg" width="1037" height="662" alt="Three columns of plots for a BMP4 and BMP10 competition series in NMuMG, the same series in the BMPR2 knockdown, and a BMP4 titration in NMuMG. Rows show predictions against observations, best-fitting least-squares cost group, path divergence, and change in prediction error."></div>
+    <div class="fig-scroll"><img loading="lazy" src="static/figs/bmp-predictions.svg" width="1037" height="662" alt="Three columns of plots for a BMP4 and BMP10 competition series in NMuMG, the same series in the BMPR2 knockdown, and a BMP4 titration in NMuMG. Rows show predictions against observations, best-fitting least-squares cost group, path divergence, and change in prediction error."></div>
     <figcaption>From top to bottom, LSR and FT predictions against observations with parameters held at the LSR reference, the LSR cost group that fits each design best, path divergence relative to the median of its series, and the reduction in absolute error from LSR to FT on a symmetric log scale.</figcaption>
   </figure>
 
@@ -372,7 +372,7 @@
   </div>
 
   <figure class="fig">
-    <div class="fig-scroll"><img loading="lazy" src="assets/figs/bmp-posterior-marginals.svg" width="860" alt="Grid of sixty small histograms comparing pretrained and fine-tuned posterior marginals for binding affinities and phosphorylation efficiencies, with a red line at the least-squares reference in each."></div>
+    <div class="fig-scroll"><img loading="lazy" src="static/figs/bmp-posterior-marginals.svg" width="860" alt="Grid of sixty small histograms comparing pretrained and fine-tuned posterior marginals for binding affinities and phosphorylation efficiencies, with a red line at the least-squares reference in each."></div>
     <figcaption>Posterior marginals for the 30 binding affinities (upper block) and 30 phosphorylation efficiencies (lower block). Purple is PT, green is FT, and red lines mark the LSR reference. FT marginals generally move toward the reference and keep their spread.</figcaption>
   </figure>
 
@@ -391,7 +391,7 @@
   </div>
 
   <figure class="fig">
-    <div class="fig-scroll"><img loading="lazy" src="assets/figs/joint-fisher-geometry.svg" width="560" height="344" alt="A curved surface of path laws with two marked points that share parameters and differ in design. Below each point is its tangent plane with one arrow for a parameter perturbation and one for a design perturbation. At the first point the two arrows are nearly parallel and span a thin sliver. At the second point they point in clearly different directions and span a wide parallelogram."></div>
+    <div class="fig-scroll"><img loading="lazy" src="static/figs/joint-fisher-geometry.svg" width="560" height="344" alt="A curved surface of path laws with two marked points that share parameters and differ in design. Below each point is its tangent plane with one arrow for a parameter perturbation and one for a design perturbation. At the first point the two arrows are nearly parallel and span a thin sliver. At the second point they point in clearly different directions and span a wide parallelogram."></div>
     <figcaption>Tangent planes at two designs \(\xi_a\) and \(\xi_b\) with the same parameters. \(v_\theta\) and \(v_\xi\) are the first-order changes in the path law from perturbing the parameters and the design, and their inner product is \(\delta\theta^{\top}I_{\theta\xi}(z)\,\delta\xi\). At \(\xi_a\) the two are nearly aligned, so a change in parameters looks like a change in design. At \(\xi_b\) they are distinct.</figcaption>
   </figure>
 
@@ -454,6 +454,6 @@
 
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
-<script defer src="assets/site.js"></script>
+<script defer src="static/site.js"></script>
 </body>
 </html>
